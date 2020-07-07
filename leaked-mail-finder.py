@@ -146,12 +146,9 @@ class EmailLeaks:
             json.dump(self.paste_dict, fp, sort_keys=True, indent=4)
 
     def test(self):
-        with open('stm_hunter.txt', 'r') as fr:
+        with open('test_file_with_emails', 'r') as fr:
             for line in fr:
                 self.email_list.add(line.strip('\n'))
-        with open('test_snovio.txt', 'r') as rf:
-            for mail in rf:
-                self.email_list.add(mail.strip('\n'))
 
 
 if __name__ == '__main__':
