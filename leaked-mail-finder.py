@@ -1,6 +1,6 @@
 from pyhunter import PyHunter
 from itertools import count
-import keys
+import keys  # create your own keys file
 import argparse
 import time
 import requests
