@@ -149,7 +149,7 @@ class EmailLeaks:
             json.dump(self.paste_dict, fp, sort_keys=True, indent=4)
 
     def hibp_breached_parser(self):
-        breached_header = "Email, BreachDate, Description, IsFabricated, IsSensitive, IsVerified, Title\n"
+        breached_header = "Email|BreachDate|Description|IsFabricated|IsSensitive|IsVerified|Title\n"
         breached_result = breached_header
         for mail in self.breached_dict:
             for i, field in enumerate(self.breached_dict[mail]):
@@ -171,7 +171,7 @@ class EmailLeaks:
     def hibp_paste_parser(self):
         with open(file2, 'r', encoding='UTF-8') as pFile:
             self.paste_dict = json.load(pFile)
-        pasted_header = "Email, Date, Id, Source, Title\n"
+        pasted_header = "Email|Date|Id|Source|Title\n"
         pasted_result = pasted_header
         for mail in self.paste_dict:
             for i, field in enumerate(self.paste_dict[mail]):
