@@ -163,7 +163,7 @@ class EmailLeaks:
             json.dump(self.paste_dict, fp, sort_keys=True, indent=4)
 
     def save_occurence(self):
-        with open('breached_{}_counted.csv'.format(self.domain_name), 'w', encoding='UTF-8') as counter: # file1 -> breached_{}.csv
+        with open('breached_{}_counted.csv'.format(self.domain_name.split('.')[0]), 'w', encoding='UTF-8') as counter: # file1 -> breached_{}.csv
             for key, value in self.dict_counter.items():
                 counter.write("{}|{}|{}\n".format(key, value[0].strip(), value[1]))
 
@@ -190,13 +190,11 @@ class EmailLeaks:
                                                         is_verified, title)
                 breached_result = breached_result + entry
 
-        with open(self.domain_name + "_breached" + '.csv', 'w', encoding='UTF-8') as csv_file:
+        with open(self.domain_name.split('.')[0] + "_breached" + '.csv', 'w', encoding='UTF-8') as csv_file:
             csv_file.write(breached_result)
         self.save_occurence()
 
     def hibp_paste_parser(self):
-        with open('paste_{}.json'.format(self.domain_name), 'r', encoding='UTF-8') as pFile:  # file2 -> 'paste_{}.json
-            self.paste_dict = json.load(pFile)
         pasted_header = "Email|Date|Id|Source|Title\n"
         pasted_result = pasted_header
         for mail in self.paste_dict:
@@ -210,7 +208,7 @@ class EmailLeaks:
                 entry = "{}|{}|{}|{}|{}\n".format(email, date, identification, source, title)
                 pasted_result = pasted_result + entry
 
-        with open(self.domain_name + "_paste" + '.csv', 'w', encoding='UTF-8') as csv_file:
+        with open(self.domain_name.split('.')[0] + "_paste" + '.csv', 'w', encoding='UTF-8') as csv_file:
             csv_file.write(pasted_result)
 
     def test(self):
