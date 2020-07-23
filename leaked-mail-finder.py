@@ -10,7 +10,7 @@ import json
 R = '\033[31m'  # red
 G = '\033[32m'  # green
 C = '\033[36m'  # cyan
-W = '\033[0m'   # white
+W = '\033[0m'  # white
 
 
 def get_field(dictionary, element, parameter):
@@ -67,19 +67,22 @@ class EmailLeaks:
 
             res = requests.post('https://api.snov.io/v1/get-domain-emails-with-info', data=params)
             res = res.json()
-            print(res)
-            for each in res["emails"]:
-                self.email_list.add(each["email"])
-                self.snov_io_mails.append(each["email"])
-            flag = True if res["result"] > 0 else False
-            time.sleep(1)
+            if not res["success"]:
+                print(R + "SNOV.IO: " + res["message"] + W)
+                return
+            else:
+                for each in res["emails"]:
+                    self.email_list.add(each["email"])
+                    self.snov_io_mails.append(each["email"])
+                flag = True if res["result"] > 0 else False
+                time.sleep(1)
 
     def domain_search_hunter(self):
         hunter = PyHunter(self.hunter_api_key)
         i = 0
-        search = hunter.domain_search(self.domain_name, limit=100, offset=100*i)
+        search = hunter.domain_search(self.domain_name, limit=100, offset=100 * i)
         while search['emails']:
-            search = hunter.domain_search(self.domain_name, limit=100, offset=100*i)
+            search = hunter.domain_search(self.domain_name, limit=100, offset=100 * i)
             for item in search['emails']:
                 user_mail = item['value']
                 self.email_list.add(user_mail)
@@ -163,7 +166,8 @@ class EmailLeaks:
             json.dump(self.paste_dict, fp, sort_keys=True, indent=4)
 
     def save_occurence(self):
-        with open('breached_{}_counted.csv'.format(self.domain_name.split('.')[0]), 'w', encoding='UTF-8') as counter: # file1 -> breached_{}.csv
+        with open('breached_{}_counted.csv'.format(self.domain_name.split('.')[0]), 'w',
+                  encoding='UTF-8') as counter:  # file1 -> breached_{}.csv
             for key, value in self.dict_counter.items():
                 counter.write("{}|{}|{}\n".format(key, value[0].strip(), value[1]))
 
@@ -220,13 +224,20 @@ if __name__ == '__main__':
     # Accept domain name from user
     ap = argparse.ArgumentParser()
     ap.add_argument("-d", "--domain", required=True, help="domain name to look for")
+    ap.add_argument("-e", "--exclude", required=False, help="to exclude sources write their initials")
     args = ap.parse_args()
 
     email_instance = EmailLeaks(args.domain, keys.HUNTER_KEY, keys.SNOV_CLIENT_ID, keys.SNOV_CLIENT_SECRET,
                                 keys.HIBP_API_KEY)
     try:
-        email_instance.domain_search_hunter()
-        # email_instance.domain_search_snovio()
+        if args.exclude == "h":
+            pass
+        else:
+            email_instance.domain_search_hunter()
+        if args.exclude == "s":
+            pass
+        else:
+            email_instance.domain_search_snovio()
         email_instance.check_breached_email()
         email_instance.check_pwned_paste()
     except Exception as e:
