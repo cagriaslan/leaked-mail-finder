@@ -1,5 +1,6 @@
 from pyhunter import PyHunter
 from itertools import count
+import html2text
 import keys  # create your own keys file
 import argparse
 import time
@@ -10,6 +11,18 @@ R = '\033[31m'  # red
 G = '\033[32m'  # green
 C = '\033[36m'  # cyan
 W = '\033[0m'   # white
+
+
+def get_field(dictionary, element, parameter):
+    try:
+        return dictionary[element][parameter]
+    except KeyError:
+        return None
+
+
+def html_to_text(txt):
+    text = html2text.html2text(txt)
+    return text.replace("\n", " ")
 
 
 class EmailLeaks:
@@ -25,6 +38,7 @@ class EmailLeaks:
         self.hibp_api_key = hibp_api_key
         self.hunter_io_mails = []
         self.snov_io_mails = []
+        self.dict_counter = {}
 
     def get_access_token(self):
         params = {
@@ -148,6 +162,11 @@ class EmailLeaks:
         with open('paste_{}.json'.format(self.domain_name), 'w') as fp:
             json.dump(self.paste_dict, fp, sort_keys=True, indent=4)
 
+    def save_occurence(self):
+        with open('breached_{}_counted.csv'.format(self.domain_name.split('.')[0]), 'w', encoding='UTF-8') as counter: # file1 -> breached_{}.csv
+            for key, value in self.dict_counter.items():
+                counter.write("{}|{}|{}\n".format(key, value[0].strip(), value[1]))
+
     def hibp_breached_parser(self):
         breached_header = "Email|BreachDate|Description|IsFabricated|IsSensitive|IsVerified|Title\n"
         breached_result = breached_header
@@ -156,25 +175,31 @@ class EmailLeaks:
                 email = mail
                 breach_date = get_field(self.breached_dict[mail], i, 'BreachDate')
                 description = get_field(self.breached_dict[mail], i, 'Description')
+                description = html_to_text(description)
                 is_fabricated = get_field(self.breached_dict[mail], i, 'IsFabricated')
                 is_sensitive = get_field(self.breached_dict[mail], i, 'IsSensitive')
                 is_verified = get_field(self.breached_dict[mail], i, 'IsVerified')
                 title = get_field(self.breached_dict[mail], i, 'Title')
 
+                try:
+                    self.dict_counter[title][1] = self.dict_counter[title][1] + 1
+                except KeyError:
+                    self.dict_counter[title] = [description, 1]  # 2 elemanli liste olustur
+
                 entry = "{}|{}|{}|{}|{}|{}|{}\n".format(email, breach_date, description, is_fabricated, is_sensitive,
                                                         is_verified, title)
                 breached_result = breached_result + entry
 
-        with open(self.domain_name + "_breached" + '.csv', 'w', encoding='UTF-8') as csv_file:
+        with open(self.domain_name.split('.')[0] + "_breached" + '.csv', 'w', encoding='UTF-8') as csv_file:
             csv_file.write(breached_result)
+        self.save_occurence()
 
     def hibp_paste_parser(self):
-        with open(file2, 'r', encoding='UTF-8') as pFile:
-            self.paste_dict = json.load(pFile)
         pasted_header = "Email|Date|Id|Source|Title\n"
         pasted_result = pasted_header
         for mail in self.paste_dict:
             for i, field in enumerate(self.paste_dict[mail]):
+                email = mail
                 date = get_field(self.paste_dict[mail], i, 'Date')
                 identification = get_field(self.paste_dict[mail], i, 'Id')
                 source = get_field(self.paste_dict[mail], i, 'Source')
@@ -183,7 +208,7 @@ class EmailLeaks:
                 entry = "{}|{}|{}|{}|{}\n".format(email, date, identification, source, title)
                 pasted_result = pasted_result + entry
 
-        with open(self.domain_name + "_paste" + '.csv', 'w', encoding='UTF-8') as csv_file:
+        with open(self.domain_name.split('.')[0] + "_paste" + '.csv', 'w', encoding='UTF-8') as csv_file:
             csv_file.write(pasted_result)
 
     def test(self):
@@ -202,7 +227,7 @@ if __name__ == '__main__':
                                 keys.HIBP_API_KEY)
     try:
         email_instance.domain_search_hunter()
-        email_instance.domain_search_snovio()
+        # email_instance.domain_search_snovio()
         email_instance.check_breached_email()
         email_instance.check_pwned_paste()
     except Exception as e:
