@@ -23,6 +23,8 @@ class EmailLeaks:
         self.snov_clien_id = snov_clien_id
         self.snov_client_secret = snov_client_secret
         self.hibp_api_key = hibp_api_key
+        self.hunter_io_mails = []
+        self.snov_io_mails = []
 
     def get_access_token(self):
         params = {
@@ -54,7 +56,7 @@ class EmailLeaks:
             print(res)
             for each in res["emails"]:
                 self.email_list.add(each["email"])
-
+                self.snov_io_mails.append(each["email"])
             flag = True if res["result"] > 0 else False
             time.sleep(1)
 
@@ -67,8 +69,9 @@ class EmailLeaks:
             for item in search['emails']:
                 user_mail = item['value']
                 self.email_list.add(user_mail)
-            print(search)
+                self.hunter_io_mails.append(user_mail)
             i += 1
+        print("{} emails have been found via hunter.io".format(len(self.hunter_io_mails)))
 
     def check_breached_email(self):
         """This function uses haveibeenpwned API and checks the e-mail pwned or not. Also, creates an output file with
@@ -105,8 +108,8 @@ class EmailLeaks:
                 print(R + '[-]' + C + ' An Unknown Error Occurred')
                 print(rqst.text)
             time.sleep(1.5)  # For rate limit of haveibeenpwned API.
-        self.save_pwned()
-        self.save_all()
+        self.hibp_breached_parser()
+        # self.save_all()
 
     def check_pwned_paste(self):
         """This function uses haveibeenpwned API and performs paste search for e-mail addresses. Creates an output file
@@ -131,7 +134,7 @@ class EmailLeaks:
                 print(R + '[-]' + C + ' An Unknown Error Occurred')
                 print(rqst_paste.text)
             time.sleep(1.5)  # For rate limit of haveibeenpwned API.
-            self.save_paste()
+            self.hibp_paste_parser()
 
     def save_all(self):
         with open('breached_{}.json'.format(self.domain_name), 'w') as fp:
@@ -144,6 +147,44 @@ class EmailLeaks:
     def save_paste(self):
         with open('paste_{}.json'.format(self.domain_name), 'w') as fp:
             json.dump(self.paste_dict, fp, sort_keys=True, indent=4)
+
+    def hibp_breached_parser(self):
+        breached_header = "Email|BreachDate|Description|IsFabricated|IsSensitive|IsVerified|Title\n"
+        breached_result = breached_header
+        for mail in self.breached_dict:
+            for i, field in enumerate(self.breached_dict[mail]):
+                email = mail
+                breach_date = get_field(self.breached_dict[mail], i, 'BreachDate')
+                description = get_field(self.breached_dict[mail], i, 'Description')
+                is_fabricated = get_field(self.breached_dict[mail], i, 'IsFabricated')
+                is_sensitive = get_field(self.breached_dict[mail], i, 'IsSensitive')
+                is_verified = get_field(self.breached_dict[mail], i, 'IsVerified')
+                title = get_field(self.breached_dict[mail], i, 'Title')
+
+                entry = "{}|{}|{}|{}|{}|{}|{}\n".format(email, breach_date, description, is_fabricated, is_sensitive,
+                                                        is_verified, title)
+                breached_result = breached_result + entry
+
+        with open(self.domain_name + "_breached" + '.csv', 'w', encoding='UTF-8') as csv_file:
+            csv_file.write(breached_result)
+
+    def hibp_paste_parser(self):
+        with open(file2, 'r', encoding='UTF-8') as pFile:
+            self.paste_dict = json.load(pFile)
+        pasted_header = "Email|Date|Id|Source|Title\n"
+        pasted_result = pasted_header
+        for mail in self.paste_dict:
+            for i, field in enumerate(self.paste_dict[mail]):
+                date = get_field(self.paste_dict[mail], i, 'Date')
+                identification = get_field(self.paste_dict[mail], i, 'Id')
+                source = get_field(self.paste_dict[mail], i, 'Source')
+                title = get_field(self.paste_dict[mail], i, 'Title')
+
+                entry = "{}|{}|{}|{}|{}\n".format(email, date, identification, source, title)
+                pasted_result = pasted_result + entry
+
+        with open(self.domain_name + "_paste" + '.csv', 'w', encoding='UTF-8') as csv_file:
+            csv_file.write(pasted_result)
 
     def test(self):
         with open('test_file_with_emails', 'r') as fr:
