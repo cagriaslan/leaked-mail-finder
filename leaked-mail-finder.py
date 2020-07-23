@@ -199,13 +199,12 @@ class EmailLeaks:
         pasted_result = pasted_header
         for mail in self.paste_dict:
             for i, field in enumerate(self.paste_dict[mail]):
-                email = mail
                 date = get_field(self.paste_dict[mail], i, 'Date')
                 identification = get_field(self.paste_dict[mail], i, 'Id')
                 source = get_field(self.paste_dict[mail], i, 'Source')
                 title = get_field(self.paste_dict[mail], i, 'Title')
 
-                entry = "{}|{}|{}|{}|{}\n".format(email, date, identification, source, title)
+                entry = "{}|{}|{}|{}|{}\n".format(mail, date, identification, source, title)
                 pasted_result = pasted_result + entry
 
         with open(self.domain_name.split('.')[0] + "_paste" + '.csv', 'w', encoding='UTF-8') as csv_file:
