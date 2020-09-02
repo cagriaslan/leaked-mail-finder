@@ -1,5 +1,6 @@
 from pyhunter import PyHunter
 from itertools import count
+from glob import glob
 import html2text
 import keys  # create your own keys file
 import argparse
@@ -38,6 +39,7 @@ class EmailLeaks:
         self.hibp_api_key = hibp_api_key
         self.hunter_io_mails = []
         self.snov_io_mails = []
+        self.fill_lists()
         self.dict_counter = {}
 
     def get_access_token(self):
@@ -52,7 +54,27 @@ class EmailLeaks:
 
         return json.loads(res_text)['access_token']
 
+    def fill_lists(self):
+        try:
+            email_file_paths = glob("email_*.em")
+            for path in email_file_paths:
+                with open(path, "r", encoding="UTF-8") as ff:
+                    if "snov" in path:
+                        print("Loaded from snov.io file")
+                        for line in ff:
+                            self.snov_io_mails.append(line.strip())
+                    elif "hunter" in path:
+                        print("Loaded from hunter.io file")
+                        for line in ff:
+                            self.snov_io_mails.append(line.strip())
+        except Exception as e:
+            print("No email lists " + str(e))
+
     def domain_search_snovio(self):
+        if len(self.snov_io_mails) > 0:
+            self.email_list.update(self.snov_io_mails)
+            print("Email list is expanded using snov.io results from the file.")
+            return
         token = self.get_access_token()
         c = count(0)
         flag = True
@@ -76,8 +98,15 @@ class EmailLeaks:
                     self.snov_io_mails.append(each["email"])
                 flag = True if res["result"] > 0 else False
                 time.sleep(1)
+        print("{} emails have been found via snov.io".format(len(self.snov_io_mails)))
+        with open("email_snov.em", "w", encoding="UTF-8") as fp:
+            fp.write("\n".join(self.snov_io_mails))
 
     def domain_search_hunter(self):
+        if len(self.hunter_io_mails) > 0:
+            self.email_list.update(self.hunter_io_mails)
+            print("Email list is expanded using hunter.io results from the file.")
+            return
         hunter = PyHunter(self.hunter_api_key)
         i = 0
         search = hunter.domain_search(self.domain_name, limit=100, offset=100 * i)
@@ -89,6 +118,8 @@ class EmailLeaks:
                 self.hunter_io_mails.append(user_mail)
             i += 1
         print("{} emails have been found via hunter.io".format(len(self.hunter_io_mails)))
+        with open("email_hunter.em", "w", encoding="UTF-8") as fp:
+            fp.write("\n".join(self.hunter_io_mails))
 
     def check_breached_email(self):
         """This function uses haveibeenpwned API and checks the e-mail pwned or not. Also, creates an output file with
