@@ -67,8 +67,8 @@ class EmailLeaks:
                         print("Loaded from hunter.io file")
                         for line in ff:
                             self.snov_io_mails.append(line.strip())
-        except Exception as e:
-            print("No email lists " + str(e))
+        except Exception as g:
+            print("No email lists " + str(g))
 
     def domain_search_snovio(self):
         if len(self.snov_io_mails) > 0:
@@ -99,8 +99,8 @@ class EmailLeaks:
                 flag = True if res["result"] > 0 else False
                 time.sleep(1)
         print("{} emails have been found via snov.io".format(len(self.snov_io_mails)))
-        with open("email_snov.em", "w", encoding="UTF-8") as fp:
-            fp.write("\n".join(self.snov_io_mails))
+        with open("email_snov.em", "w", encoding="UTF-8") as ff:
+            ff.write("\n".join(self.snov_io_mails))
 
     def domain_search_hunter(self):
         if len(self.hunter_io_mails) > 0:
@@ -118,8 +118,8 @@ class EmailLeaks:
                 self.hunter_io_mails.append(user_mail)
             i += 1
         print("{} emails have been found via hunter.io".format(len(self.hunter_io_mails)))
-        with open("email_hunter.em", "w", encoding="UTF-8") as fp:
-            fp.write("\n".join(self.hunter_io_mails))
+        with open("email_hunter.em", "w", encoding="UTF-8") as ff:
+            ff.write("\n".join(self.hunter_io_mails))
 
     def check_breached_email(self):
         """This function uses haveibeenpwned API and checks the e-mail pwned or not. Also, creates an output file with
@@ -273,5 +273,5 @@ if __name__ == '__main__':
         email_instance.check_pwned_paste()
     except Exception as e:
         print(str(e))
-        with open(args.domain + ".txt", "w", encoding="UTF-8") as fp:
-            fp.write("\n".join(email_instance.email_list))
+        with open(args.domain + ".txt", "w", encoding="UTF-8") as ft:
+            ft.write("\n".join(email_instance.email_list))
