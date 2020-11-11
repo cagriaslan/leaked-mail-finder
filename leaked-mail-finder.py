@@ -48,10 +48,9 @@ class EmailLeaks:
             'client_id': self.snov_clien_id,
             'client_secret': self.snov_client_secret
         }
-
         res = requests.post('https://api.snov.io/v1/oauth/access_token', data=params)
         res_text = res.text.encode('ascii', 'ignore')
-
+        print(res_text)
         return json.loads(res_text)['access_token']
 
     def fill_lists(self):
@@ -66,7 +65,7 @@ class EmailLeaks:
                     elif "hunter" in path:
                         print("Loaded from hunter.io file")
                         for line in ff:
-                            self.snov_io_mails.append(line.strip())
+                            self.hunter_io_mails.append(line.strip())
         except Exception as g:
             print("No email lists " + str(g))
 
@@ -86,8 +85,8 @@ class EmailLeaks:
                 'limit': 100,
                 'offset': 100 * next(c)
             }
-
-            res = requests.post('https://api.snov.io/v1/get-domain-emails-with-info', data=params)
+            res = requests.get('https://api.snov.io/v2/domain-emails-with-info', data=params)
+            print(res.text)
             res = res.json()
             if not res["success"]:
                 print(R + "SNOV.IO: " + res["message"] + W)
