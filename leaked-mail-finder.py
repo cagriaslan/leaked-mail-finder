@@ -75,7 +75,7 @@ class EmailLeaks:
             print("Email list is expanded using snov.io results from the file.")
             return
         token = self.get_access_token()
-        c = count(0)
+        c = 0
         flag = True
         while flag:
             params = {
@@ -83,7 +83,7 @@ class EmailLeaks:
                 'domain': self.domain_name,
                 'type': 'all',
                 'limit': 100,
-                'lastId': 100 * next(c)
+                'lastId': c
             }
             res = requests.get('https://api.snov.io/v2/domain-emails-with-info', params=params)
             res = res.json()
@@ -96,6 +96,7 @@ class EmailLeaks:
                     self.snov_io_mails.append(each["email"])
                 flag = False if res["result"] < 100 else True
                 time.sleep(1)
+                c = res["lastId"]
         print("{} emails have been found via snov.io".format(len(self.snov_io_mails)))
         with open("email_snov.em", "w", encoding="UTF-8") as ff:
             ff.write("\n".join(self.snov_io_mails))
