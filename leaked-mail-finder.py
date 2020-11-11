@@ -50,7 +50,7 @@ class EmailLeaks:
         }
         res = requests.post('https://api.snov.io/v1/oauth/access_token', data=params)
         res_text = res.text.encode('ascii', 'ignore')
-        print(res_text)
+
         return json.loads(res_text)['access_token']
 
     def fill_lists(self):
@@ -83,10 +83,9 @@ class EmailLeaks:
                 'domain': self.domain_name,
                 'type': 'all',
                 'limit': 100,
-                'offset': 100 * next(c)
+                'lastId': 100 * next(c)
             }
-            res = requests.get('https://api.snov.io/v2/domain-emails-with-info', data=params)
-            print(res.text)
+            res = requests.get('https://api.snov.io/v2/domain-emails-with-info', params=params)
             res = res.json()
             if not res["success"]:
                 print(R + "SNOV.IO: " + res["message"] + W)
@@ -95,7 +94,7 @@ class EmailLeaks:
                 for each in res["emails"]:
                     self.email_list.add(each["email"])
                     self.snov_io_mails.append(each["email"])
-                flag = True if res["result"] > 0 else False
+                flag = False if res["result"] < 100 else True
                 time.sleep(1)
         print("{} emails have been found via snov.io".format(len(self.snov_io_mails)))
         with open("email_snov.em", "w", encoding="UTF-8") as ff:
